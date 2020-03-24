@@ -55,8 +55,7 @@ class _MyAppState extends State<MyApp> {
     if (query.isNotEmpty) {
       List<String> dummyListData = List<String>();
       dummySearchList.forEach((item) {
-        var lower = item.toLowerCase();
-        if (lower.contains(query)) {
+        if (item.toLowerCase().contains(query)) {
           dummyListData.add(item);
         }
       });
