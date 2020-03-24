@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:corona_app/country_data.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -31,63 +32,6 @@ Future<Countries> fetchCountries() async {
   }
 }
 
-class Countries {
-  List<CountryData> countries;
-
-  Countries({this.countries});
-  factory Countries.fromJson(Map<String, dynamic> json) {
-    List<CountryData> countryDataList = [];
-
-    json.forEach((index, value) =>
-        countryDataList.add(new CountryData.fromJson(index, value)));
-
-    countryDataList.sort((a, b) {
-      return a.country.toLowerCase().compareTo(b.country.toLowerCase());
-    });
-    return Countries(countries: countryDataList);
-  }
-}
-
-class CountryData {
-  final String country;
-  final List<DailyData> dailyData;
-
-  CountryData({this.country, this.dailyData});
-
-  factory CountryData.fromJson(String country, List<dynamic> list) {
-    List<DailyData> countryData = [];
-
-    list.forEach((value) => countryData.add(new DailyData(
-        date: value['date'],
-        confirmed: value['confirmed'],
-        deaths: value['deaths'],
-        recovered: value['recovered'])));
-    // for (var i = 0; i < (json.keys.length); i++) {
-    //   print(json[json.keys[i]].toString());
-    //   // countries.add(new CountryData(json.values[i]));
-    // }
-
-    return CountryData(country: country, dailyData: countryData);
-  }
-}
-
-class DailyData {
-  final String date;
-  final int confirmed;
-  final int deaths;
-  final int recovered;
-
-  DailyData({this.date, this.confirmed, this.deaths, this.recovered});
-
-  factory DailyData.fromJson(Map<String, dynamic> json) {
-    return DailyData(
-        date: json['date'],
-        confirmed: json['confirmed'],
-        deaths: json['deaths'],
-        recovered: json['recovered']);
-  }
-}
-
 class _MyAppState extends State<MyApp> {
   Future<Countries> futureCountries;
   final duplicateCountries = List<String>();
@@ -111,7 +55,8 @@ class _MyAppState extends State<MyApp> {
     if (query.isNotEmpty) {
       List<String> dummyListData = List<String>();
       dummySearchList.forEach((item) {
-        if (item.contains(query)) {
+        var lower = item.toLowerCase();
+        if (lower.contains(query)) {
           dummyListData.add(item);
         }
       });
