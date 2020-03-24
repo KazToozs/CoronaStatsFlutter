@@ -34,8 +34,8 @@ Future<Countries> fetchCountries() async {
 
 class _MyAppState extends State<MyApp> {
   Future<Countries> futureCountries;
-  final duplicateCountries = List<String>();
-  var searchItems = List<String>();
+  final duplicateCountries = List<CountryData>();
+  var searchItems = List<CountryData>();
   TextEditingController editingController = TextEditingController();
 
   @override
@@ -43,19 +43,20 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     futureCountries = fetchCountries();
     futureCountries.then((value) => value.countries.forEach((country) {
-          duplicateCountries.add(country.country);
+          duplicateCountries.add(country);
           searchItems.addAll(duplicateCountries);
         }));
   }
 
   void filterSearchResults(String query) {
-    List<String> dummySearchList = List<String>();
+    List<CountryData> dummySearchList = List<CountryData>();
+
     dummySearchList.addAll(duplicateCountries);
 
     if (query.isNotEmpty) {
-      List<String> dummyListData = List<String>();
+      List<CountryData> dummyListData = List<CountryData>();
       dummySearchList.forEach((item) {
-        if (item.toLowerCase().contains(query.toLowerCase())) {
+        if (item.country.toLowerCase().contains(query.toLowerCase())) {
           dummyListData.add(item);
         }
       });
@@ -132,11 +133,11 @@ class _MyAppState extends State<MyApp> {
                             itemBuilder: (context, index) {
                               if (snapshot.hasData) {
                                 return ListTile(
-                                    title: Text(searchItems[index]),
+                                    title: Text(searchItems[index].country),
                                     onTap: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                              builder: (context) => CountryDetailPage(details: snapshot.data.countries[index]),
+                                              builder: (context) => CountryDetailPage(details: searchItems[index]),
                                             ),
                                       ),
                                     );

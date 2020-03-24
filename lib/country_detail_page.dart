@@ -1,6 +1,5 @@
 
 import 'package:corona_app/country_data.dart';
-import 'package:corona_app/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
