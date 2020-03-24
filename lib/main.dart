@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'country_detail_page.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
@@ -38,15 +40,19 @@ class Countries {
 
     json.forEach((index, value) =>
         countryDataList.add(new CountryData.fromJson(index, value)));
+
+    countryDataList.sort((a, b) {
+      return a.country.toLowerCase().compareTo(b.country.toLowerCase());
+    });
     return Countries(countries: countryDataList);
   }
 }
 
 class CountryData {
   final String country;
-  final List<DailyData> countryData;
+  final List<DailyData> dailyData;
 
-  CountryData({this.country, this.countryData});
+  CountryData({this.country, this.dailyData});
 
   factory CountryData.fromJson(String country, List<dynamic> list) {
     List<DailyData> countryData = [];
@@ -60,7 +66,8 @@ class CountryData {
     //   print(json[json.keys[i]].toString());
     //   // countries.add(new CountryData(json.values[i]));
     // }
-    return CountryData(country: country, countryData: countryData);
+
+    return CountryData(country: country, dailyData: countryData);
   }
 }
 
@@ -83,11 +90,42 @@ class DailyData {
 
 class _MyAppState extends State<MyApp> {
   Future<Countries> futureCountries;
+  final duplicateCountries = List<String>();
+  var searchItems = List<String>();
+  TextEditingController editingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     futureCountries = fetchCountries();
+    futureCountries.then((value) => value.countries.forEach((country) {
+          duplicateCountries.add(country.country);
+          searchItems.addAll(duplicateCountries);
+        }));
+  }
+
+  void filterSearchResults(String query) {
+    List<String> dummySearchList = List<String>();
+    dummySearchList.addAll(duplicateCountries);
+
+    if (query.isNotEmpty) {
+      List<String> dummyListData = List<String>();
+      dummySearchList.forEach((item) {
+        if (item.contains(query)) {
+          dummyListData.add(item);
+        }
+      });
+      setState(() {
+        searchItems.clear();
+        searchItems.addAll(dummyListData);
+      });
+      return;
+    } else {
+      setState(() {
+        searchItems.clear();
+        searchItems.addAll(dummySearchList);
+      });
+    }
   }
 
   // This widget is the root of your application.
@@ -111,27 +149,63 @@ class _MyAppState extends State<MyApp> {
           appBar: AppBar(
             // Here we take the value from the MyHomePage object that was created by
             // the App.build method, and use it to set our appbar title.
-            title: Text('Test App'),
+            title: Text('Select a Country'),
           ),
-          body: FutureBuilder<Countries>(
-              future: futureCountries,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.none &&
-                    snapshot.hasData == null) {
-                  //print('project snapshot data is: ${projectSnap.data}');
-                  return CircularProgressIndicator();
-                }
-                return ListView.builder(
-                  itemCount: snapshot.data.countries.length,
-                  itemBuilder: (context, index) {
-                  if (snapshot.hasData) {
-                    return Text(snapshot.data.countries[index].country);
-                  } else if (snapshot.hasError) {
-                    return Text("${snapshot.error}");
-                  }
-                  // By default, show a loading spinner.
-                });
-              }),
+          body: Container(
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    onChanged: (value) {
+                      filterSearchResults(value);
+                    },
+                    controller: editingController,
+                    decoration: InputDecoration(
+                        labelText: "Search",
+                        hintText: "Search",
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(25.0)))),
+                  ),
+                ),
+                Expanded(
+                  child: FutureBuilder<Countries>(
+                      future: futureCountries,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            snapshot.hasData == false) {
+                          //print('project snapshot data is: ${projectSnap.data}');
+                          return Center(child: CircularProgressIndicator());
+                        }
+                        return ListView.separated(
+                            separatorBuilder: (context, index) => Divider(
+                                  color: Colors.black,
+                                ),
+                            itemCount: searchItems.length,
+                            itemBuilder: (context, index) {
+                              if (snapshot.hasData) {
+                                return ListTile(
+                                    title: Text(searchItems[index]),
+                                    onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                              builder: (context) => CountryDetailPage(details: snapshot.data.countries[index]),
+                                            ),
+                                      ),
+                                    );
+                              } else if (snapshot.hasError) {
+                                return Text("${snapshot.error}");
+                              }
+                              // By default, show a loading spinner.
+                            });
+                      }),
+                ),
+              ],
+            ),
+          ),
         ));
   }
 }
