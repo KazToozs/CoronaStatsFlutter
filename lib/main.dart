@@ -44,7 +44,7 @@ class _MyAppState extends State<MyApp> {
     futureCountries = fetchCountries();
     futureCountries.then((value) => value.countries.forEach((country) {
           duplicateCountries.add(country);
-          searchItems.addAll(duplicateCountries);
+          searchItems.add(country);
         }));
   }
 
