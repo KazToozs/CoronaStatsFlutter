@@ -34,18 +34,72 @@ Future<Countries> fetchCountries() async {
 
 class _MyAppState extends State<MyApp> {
   Future<Countries> futureCountries;
+  CountryData selected;
   final duplicateCountries = List<CountryData>();
   var searchItems = List<CountryData>();
   TextEditingController editingController = TextEditingController();
+  int totalConfirmed;
+  int totalDeaths;
+  int totalRecovered;
 
   @override
   void initState() {
     super.initState();
+
+    totalConfirmed = 0;
+    totalDeaths = 0;
+    totalRecovered = 0;
+    selected =
+        new CountryData(country: "WORLDWIDE", dailyData: List<DailyData>());
+    selected.dailyData.add(new DailyData(
+        date: "N/A",
+        confirmed: totalConfirmed,
+        deaths: totalDeaths,
+        recovered: totalRecovered));
     futureCountries = fetchCountries();
-    futureCountries.then((value) => value.countries.forEach((country) {
+    futureCountries.then((value) {
+      setState(() {
+        value.countries.forEach((country) {
           duplicateCountries.add(country);
           searchItems.add(country);
-        }));
+        });
+
+        calculateWorldTotal(duplicateCountries);
+        selected =
+            new CountryData(country: "WORLDWIDE", dailyData: List<DailyData>());
+        selected.dailyData.add(new DailyData(
+            date: "N/A",
+            confirmed: totalConfirmed,
+            deaths: totalDeaths,
+            recovered: totalRecovered));
+      });
+      duplicateCountries.insert(0, selected);
+      searchItems.insert(0, selected);
+
+    });
+  }
+
+  void calculateWorldTotal(List<CountryData> allCountryData) {
+    var test = 0;
+    for (int i = 0; i < allCountryData.length; i++) {
+      totalConfirmed += (allCountryData[i].dailyData.last.confirmed != null)
+          ? allCountryData[i].dailyData.last.confirmed
+          : 0;
+      totalDeaths += (allCountryData[i].dailyData.last.deaths != null)
+          ? allCountryData[i].dailyData.last.deaths
+          : 0;
+      totalRecovered += (allCountryData[i].dailyData.last.recovered != null)
+          ? allCountryData[i].dailyData.last.recovered
+          : 0;
+      test = totalRecovered;
+    }
+    // allCountryData.forEach((country) {
+    //   totalConfirmed += country.dailyData.last.confirmed;
+    //   totalDeaths += country.dailyData.last.deaths;
+    //   totalRecovered += country.dailyData.last.recovered;
+    //   test++;
+    // });
+    print(test);
   }
 
   void filterSearchResults(String query) {
@@ -71,6 +125,13 @@ class _MyAppState extends State<MyApp> {
         searchItems.addAll(dummySearchList);
       });
     }
+  }
+
+  String checkData(String string) {
+    if (string.compareTo("null") == 0) {
+      return ("No data");
+    }
+    return (string);
   }
 
   // This widget is the root of your application.
@@ -99,6 +160,45 @@ class _MyAppState extends State<MyApp> {
           body: Container(
             child: Column(
               children: <Widget>[
+                // Country details block
+                Container(
+                  padding: EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(selected.country)),
+                      Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("Confirmed Cases: " +
+                            checkData(
+                                selected.dailyData.last.confirmed.toString())),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("Related Deaths: " +
+                            checkData(
+                                selected.dailyData.last.deaths.toString())),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("Recovered: " +
+                            checkData(
+                                selected.dailyData.last.recovered.toString())),
+                      ),
+                      // Center(
+                      //   child: Padding(
+                      //     padding: EdgeInsets.all(16.0),
+                      //     child: Text("Last updated: " +
+                      //         checkData(
+                      //             selected.dailyData.last.date.toString())),
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                ),
+                // Search bar
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
@@ -115,6 +215,7 @@ class _MyAppState extends State<MyApp> {
                                 BorderRadius.all(Radius.circular(25.0)))),
                   ),
                 ),
+                // List of countries
                 Expanded(
                   child: FutureBuilder<Countries>(
                       future: futureCountries,
@@ -133,14 +234,16 @@ class _MyAppState extends State<MyApp> {
                             itemBuilder: (context, index) {
                               if (snapshot.hasData) {
                                 return ListTile(
-                                    title: Text(searchItems[index].country),
-                                    onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                              builder: (context) => CountryDetailPage(details: searchItems[index]),
-                                            ),
-                                      ),
-                                    );
+                                  title: Text(searchItems[index].country),
+                                  // onTap: () => Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (context) => CountryDetailPage(
+                                  //         details: searchItems[index]),
+                                  //   ),
+                                  // ),
+                                  onTap: () => setState(() => selected = searchItems[index])
+                                );
                               } else if (snapshot.hasError) {
                                 return Text("${snapshot.error}");
                               }
